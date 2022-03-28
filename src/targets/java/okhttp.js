@@ -33,7 +33,7 @@ module.exports = function (source, options) {
     source.postData.params.forEach((param) => {
       if (param.fileName) {
         code.push('%s.addFormDataPart(%s, %s,', opts.indent, JSON.stringify(param.name), JSON.stringify(param.fileName))
-        .push('%s%sRequestBody.create(MediaType.parse("text/plain"), fileInput))', opts.indent, opts.indent)
+          .push('%s%sRequestBody.create(MediaType.parse("text/plain"), fileInput))', opts.indent, opts.indent)
       } else {
         const value = JSON.stringify(param.value.toString()) || ""
         code.push('%s.addFormDataPart(%s, %s)', opts.indent, JSON.stringify(param.name), value)
