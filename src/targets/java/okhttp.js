@@ -26,17 +26,40 @@ module.exports = function (source, options) {
   code.push('OkHttpClient client = new OkHttpClient();')
     .blank()
 
-  if (source.postData.text) {
-    if (source.postData.boundary) {
-      code.push('MediaType mediaType = MediaType.parse("%s; boundary=%s");', source.postData.mimeType, source.postData.boundary)
-    } else {
-      code.push('MediaType mediaType = MediaType.parse("%s");', source.postData.mimeType)
-    }
-    code.push('RequestBody body = RequestBody.create(mediaType, %s);', JSON.stringify(source.postData.text))
+  if (source.postData.mimeType === 'multipart/form-data') {
+    code.push('RequestBody body = new MultipartBody.Builder()')
+      .push('%s.setType(MultipartBody.FORM)', opts.indent)
+
+    source.postData.params.forEach((param) => {
+      if (param.fileName) {
+        code.push('%s.addFormDataPart(%s, %s,', opts.indent, JSON.stringify(param.name), JSON.stringify(param.fileName))
+        .push('%s%sRequestBody.create(MediaType.parse("text/plain"), fileInput))', opts.indent, opts.indent)
+      } else {
+        const value = JSON.stringify(param.value.toString()) || ""
+        code.push('%s.addFormDataPart(%s, %s)', opts.indent, JSON.stringify(param.name), value)
+      }
+    })
+    
+    code.push('%s.build();', opts.indent)
+  } else if (source.postData.mimeType === 'application/x-www-form-urlencoded') {
+    code.push('RequestBody body = new FormBody.Builder()')
+    
+    source.postData.params.forEach((param) => {
+      const value = JSON.stringify(param.value.toString()) || ""
+      code.push('%s.add(%s, %s)', opts.indent, JSON.stringify(param.name), value)
+    })
+
+    code.push('%s.build();', opts.indent)
+  } else if (source.postData.text) {
+    code.push('MediaType mediaType = MediaType.parse("%s");', source.postData.mimeType)
+      .push('String value = %s;', JSON.stringify(source.postData.text))
+      .push('RequestBody body = RequestBody.create(mediaType, value);')
   }
 
-  code.push('Request request = new Request.Builder()')
-  code.push(1, '.url("%s")', source.fullUrl)
+  code.blank()
+    .push('Request request = new Request.Builder()')
+    .push(1, '.url("%s")', source.fullUrl)
+  
   if (methods.indexOf(source.method.toUpperCase()) === -1) {
     if (source.postData.text) {
       code.push(1, '.method("%s", body)', source.method.toUpperCase())
@@ -58,9 +81,8 @@ module.exports = function (source, options) {
 
   // construct headers
   if (headers.length) {
-    headers.forEach(function (key) {
-      code.push(1, '.addHeader("%s", "%s")', key, source.allHeaders[key])
-    })
+    headers.filter(key => !(source.allHeaders[key].toLowerCase().includes('multipart/form-data'))) // Remove content type header if form-data
+      .forEach((key) => { code.push(1, '.addHeader("%s", "%s")', key, source.allHeaders[key]) })
   }
 
   code.push(1, '.build();')
