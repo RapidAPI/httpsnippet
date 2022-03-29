@@ -28,28 +28,28 @@ module.exports = function (source, options) {
 
   if (source.postData.mimeType === 'multipart/form-data') {
     code.push('RequestBody body = new MultipartBody.Builder()')
-      .push('%s.setType(MultipartBody.FORM)', opts.indent)
+      .push(1, '.setType(MultipartBody.FORM)')
 
     source.postData.params.forEach((param) => {
       if (param.fileName) {
-        code.push('%s.addFormDataPart(%s, %s,', opts.indent, JSON.stringify(param.name), JSON.stringify(param.fileName))
-          .push('%s%sRequestBody.create(MediaType.parse("text/plain"), fileInput))', opts.indent, opts.indent)
+        code.push(1, '.addFormDataPart(%s, %s,', JSON.stringify(param.name), JSON.stringify(param.fileName))
+          .push(2, 'RequestBody.create(MediaType.parse("text/plain"), fileInput))')
       } else {
         const value = JSON.stringify(param.value.toString()) || ""
-        code.push('%s.addFormDataPart(%s, %s)', opts.indent, JSON.stringify(param.name), value)
+        code.push(1, '.addFormDataPart(%s, %s)', JSON.stringify(param.name), value)
       }
     })
     
-    code.push('%s.build();', opts.indent)
+    code.push(1, '.build();')
   } else if (source.postData.mimeType === 'application/x-www-form-urlencoded') {
     code.push('RequestBody body = new FormBody.Builder()')
     
     source.postData.params.forEach((param) => {
       const value = JSON.stringify(param.value.toString()) || ""
-      code.push('%s.add(%s, %s)', opts.indent, JSON.stringify(param.name), value)
+      code.push(1, '.add(%s, %s)', JSON.stringify(param.name), value)
     })
 
-    code.push('%s.build();', opts.indent)
+    code.push(1, '.build();')
   } else if (source.postData.text) {
     code.push('MediaType mediaType = MediaType.parse("%s");', source.postData.mimeType)
       .push('String value = %s;', JSON.stringify(source.postData.text))
