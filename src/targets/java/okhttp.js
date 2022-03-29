@@ -82,7 +82,7 @@ module.exports = function (source, options) {
 
   // construct headers
   _(source.allHeaders)
-    .pickBy((value, key) => !(value.toLowerCase().includes('multipart/form-data')))
+    .pickBy((value, key) => !(value.toLowerCase().includes('multipart/form-data'))) // Remove content type header if form-data
     .forEach((value, key) => { code.push(1, '.addHeader("%s", "%s")', key, value) })
 
   code.push(1, '.build();')
