@@ -56,8 +56,11 @@ module.exports = function (source, options) {
       .push('RequestBody body = RequestBody.create(mediaType, value);')
   }
 
-  code.blank()
-    .push('Request request = new Request.Builder()')
+  if (source.postData.params) {
+    code.blank()
+  }
+
+  code.push('Request request = new Request.Builder()')
     .push(1, '.url("%s")', source.fullUrl)
   
   if (methods.indexOf(source.method.toUpperCase()) === -1) {
