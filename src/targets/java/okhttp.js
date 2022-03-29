@@ -10,6 +10,7 @@
 
 'use strict'
 
+const _ = require('lodash')
 const CodeBuilder = require('../../helpers/code-builder')
 
 module.exports = function (source, options) {
@@ -79,14 +80,10 @@ module.exports = function (source, options) {
     code.push(1, '.%s()', source.method.toLowerCase())
   }
 
-  // Add headers, including the cookies
-  const headers = Object.keys(source.allHeaders)
-
   // construct headers
-  if (headers.length) {
-    headers.filter(key => !(source.allHeaders[key].toLowerCase().includes('multipart/form-data'))) // Remove content type header if form-data
-      .forEach((key) => { code.push(1, '.addHeader("%s", "%s")', key, source.allHeaders[key]) })
-  }
+  _(source.allHeaders)
+    .pickBy((value, key) => !(value.toLowerCase().includes('multipart/form-data')))
+    .forEach((value, key) => { code.push(1, '.addHeader("%s", "%s")', key, value) })
 
   code.push(1, '.build();')
     .blank()
